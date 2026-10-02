@@ -90,6 +90,7 @@ Web Application Container
 - Production URL ต้องเปิด core analytics ได้หลัง deploy.
 - SQLite database ต้องอยู่ใน persistent storage หาก deployment restart แล้วข้อมูลต้องคงอยู่.
 - Build: `docker build` from the repo `Dockerfile` (python:3.12-slim base). Start: container entrypoint runs the idempotent CSV import (only if `DATABASE_PATH` does not yet exist) then starts `gunicorn --bind 0.0.0.0:$PORT app:app`.
+- `docker-compose.yaml` ไม่ publish host port ตรงๆ (ใช้ `expose` แทน `ports`) เพราะ Coolify เป็น shared host ที่มีหลาย app/บริการใช้ port ของ host อยู่แล้ว (ชนกับ dashboard ของ Coolify เองตอนลองจริง) — Traefik ของ Coolify เข้าถึง container ผ่าน internal network แทน ดูเหตุผลเต็มที่ `docs/ADR.md` ADR-006. การรัน local ใช้ `docker-compose.override.yml` (ไม่ถูก Coolify อ่าน) เพื่อ publish `localhost:8000` สำหรับ dev เท่านั้น.
 
 ## Scalability Strategy
 
@@ -106,6 +107,7 @@ Web Application Container
 | Coolify | production deployment | Core | ถ้า deploy ไม่ผ่านถือว่า core ยังไม่ส่งมอบ |
 | AI endpoint (currently OpenRouter, time-boxed company key — see ADR-005) | สร้าง exploration recommendation | Bonus | ต้อง fail independently; core dashboard ยังใช้ได้ |
 | Claude Code/Codex | coding workflow | Build-time | ไม่ใช่ runtime dependency |
+| Google Fonts CDN (`fonts.googleapis.com`/`fonts.gstatic.com`) | โหลด webfonts (Fraunces, IBM Plex Sans Thai, IBM Plex Mono) สำหรับ UI | Core (visual only) | Client-side only; ถ้าบล็อกหรือโหลดไม่ได้ browser จะ fallback ไปใช้ font ที่ประกาศไว้ในฝั่ง fallback ของ CSS (`serif`/`sans-serif`/`monospace`) — หน้าเว็บยังอ่านและใช้งานได้ปกติ ไม่กระทบ core analytics |
 
 ## Observability & SLOs
 

@@ -133,6 +133,34 @@ Each ADR records a decision that is already implemented in this repository, not 
   environment variable at runtime (set via Coolify's environment configuration, not a file in
   version control).
 
+## ADR-006: `expose`, not `ports`, in docker-compose.yaml for Coolify compatibility
+
+- Status: accepted
+- Context: The Dockerfile/`docker-compose.yaml` pair is deployed to Coolify (a shared,
+  multi-tenant host running many other apps). The first deployment attempt published the app's
+  port directly to the host (`ports: ["8000:8000"]`) and failed with "port is already
+  allocated" — Coolify's own dashboard was already bound to host port 8000, and any other app
+  on the host could just as easily claim whatever port is hardcoded.
+- Alternatives considered:
+  - Pick a different hardcoded host port — only moves the collision risk to a different
+    number; still breaks the moment another app on the shared host picks the same one.
+  - Make the host port configurable via an environment variable — still requires every
+    deployment to coordinate a unique value by hand; doesn't remove the underlying risk.
+- Decision: `docker-compose.yaml` (the file Coolify actually reads and deploys) uses `expose`,
+  not `ports`, for the `web` service. Coolify's Traefik proxy reaches the container directly
+  over the shared `coolify` Docker network using the exposed port, so no host port binding is
+  needed at all on the deployed host. A separate `docker-compose.override.yml` (auto-merged by
+  plain `docker compose up`, never read by Coolify) adds `ports: ["8000:8000"]` back for local
+  development convenience only.
+- Positive consequences: zero host-port collision risk on the shared Coolify server, for this
+  app or any other app that might later claim a port; local `docker compose up` still works
+  unchanged (`localhost:8000`) via the override file; no coordination needed between
+  deployments.
+- Negative consequences: one extra file to maintain (`docker-compose.override.yml`); anyone
+  reading only `docker-compose.yaml` might wonder how local port access works without also
+  knowing Docker Compose auto-merges override files by convention — documented in both files
+  and in `CLAUDE.md`.
+
 Validation Checklist
 - [x] Each ADR has context, alternatives considered, decision, positive and negative consequences
 - [x] All ADRs here describe already-implemented or about-to-be-implemented decisions, not speculative ones

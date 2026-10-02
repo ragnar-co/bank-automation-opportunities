@@ -97,6 +97,12 @@ Bonus: Task Detail "Generate AI Exploration" -> app/ai_service.py (sole provider
 ```
 
 - Storage is SQLite3 (not DuckDB — see `docs/ADR.md` ADR-002).
+- `docker-compose.yaml` uses `expose` (not `ports`) for the web service — Coolify's Traefik
+  reaches the container over its internal network; publishing a host port directly collided
+  with Coolify's own dashboard on the shared host (see `docs/ADR.md` ADR-006).
+  `docker-compose.override.yml` (tracked in git, but never read by Coolify — only
+  auto-merged by plain `docker compose up`) adds the `localhost:8000` port mapping back for
+  local dev only.
 - CSV ingestion is a script/command run before the UI is used — there is deliberately no
   CSV-upload UI (out of scope, see SCOPE.md).
 - The Web UI must read from persisted SQLite3 data, not recompute from the CSV on every
@@ -114,6 +120,28 @@ Bonus: Task Detail "Generate AI Exploration" -> app/ai_service.py (sole provider
   text), the adapter raises `AIServiceUnavailable` and Task Detail shows an "AI unavailable"
   state — the AI bonus path must fail independently without breaking Dashboard, Task Detail's
   task data, department totals, or Top 3.
+
+## Visual design ("Ledger Noir")
+
+`static/style.css` defines a dark, token-based design system — change tokens in `:root`, not
+ad-hoc values in component rules:
+
+- **Color**: dark surfaces (`--bg`, `--surface`, `--surface-raised`), amber (`--amber*`) marks
+  the "opportunity" signal (stat highlights, primary button, #1 rank card), cyan (`--cyan*`)
+  marks comparative/data elements (department badges, bar-chart gradient start).
+- **Type**: `--font-display` (Fraunces, serif headings), `--font-body` (IBM Plex Sans Thai —
+  chosen specifically because `task_name` values are in Thai; don't swap for a Latin-only
+  font), `--font-mono` (IBM Plex Mono, used for every numeric/data value: stats, table
+  numbers, timestamps, task IDs). Loaded from Google Fonts via `<link>` tags in
+  `templates/base.html` (see "Third-party Integrations" in `docs/ARCHITECTURE.md` for the
+  fallback behavior if that CDN is blocked).
+- **Radius/spacing/shadow**: `--r-sm/md/lg/pill` and `--sp-1`…`--sp-6` scales; reuse them
+  rather than introducing new hardcoded values.
+- Column-specific table styling (`#task-table td:nth-child(...)`) is scoped to the Dashboard's
+  `#task-table` id specifically — don't write bare `td:nth-child(...)` rules, they'll leak
+  into the Saved Explorations table, which has a different column layout.
+- Respects `prefers-reduced-motion` (count-up/entrance/pulse animations) — keep that guard
+  when adding new animations.
 
 ## Hard requirements / constraints
 

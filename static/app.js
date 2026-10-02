@@ -130,3 +130,43 @@
 
     render();
 })();
+
+// Count-up reveal for Dashboard stat cards. No-ops on pages without these
+// data attributes. Mirrors the server-side `human_minutes` Jinja filter so
+// the animated value matches the final server-rendered text exactly.
+(function () {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const DURATION_MS = 900;
+
+    function humanMinutes(totalMinutes) {
+        totalMinutes = Math.round(totalMinutes);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (hours && minutes) return `${hours}h ${minutes}m`;
+        if (hours) return `${hours}h`;
+        return `${minutes}m`;
+    }
+
+    function animateValue(el, target, render) {
+        if (reduceMotion) {
+            el.textContent = render(target);
+            return;
+        }
+        const start = performance.now();
+        function tick(now) {
+            const progress = Math.min((now - start) / DURATION_MS, 1);
+            const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+            el.textContent = render(Math.round(target * eased));
+            if (progress < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    document.querySelectorAll("[data-count-to]").forEach((el) => {
+        animateValue(el, parseInt(el.getAttribute("data-count-to"), 10) || 0, (v) => String(v));
+    });
+
+    document.querySelectorAll("[data-count-minutes]").forEach((el) => {
+        animateValue(el, parseInt(el.getAttribute("data-count-minutes"), 10) || 0, humanMinutes);
+    });
+})();

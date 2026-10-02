@@ -8,15 +8,15 @@
 
     <section class="stat-grid">
         <div class="stat-card">
-            <span class="stat-value">{{ summary.task_count }}</span>
+            <span class="stat-value" data-count-to="{{ summary.task_count }}">0</span>
             <span class="stat-label">Tasks tracked</span>
         </div>
         <div class="stat-card">
-            <span class="stat-value">{{ summary.department_count }}</span>
+            <span class="stat-value" data-count-to="{{ summary.department_count }}">0</span>
             <span class="stat-label">Departments</span>
         </div>
         <div class="stat-card">
-            <span class="stat-value">{{ summary.total_weekly_minutes | human_minutes }}</span>
+            <span class="stat-value" data-count-minutes="{{ summary.total_weekly_minutes }}">0m</span>
             <span class="stat-label">Total weekly effort</span>
         </div>
     </section>
@@ -26,9 +26,9 @@
         {% if top_tasks %}
         <div class="top-cards">
             {% for task in top_tasks %}
-            <div class="top-card">
+            <div class="top-card {% if loop.first %}top-card-first{% endif %}">
                 <span class="rank">#{{ loop.index }}</span>
-                <span class="badge">{{ task.department }}</span>
+                <span class="badge">{% if loop.first %}<span class="badge-pulse"></span>{% endif %}{{ task.department }}</span>
                 <p class="task-name">{{ task.task_name }}</p>
                 <p class="task-effort">{{ task.weekly_minutes | human_minutes }}<small> / week</small></p>
                 <p class="task-id">{{ task.task_id }}</p>

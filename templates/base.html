@@ -4,12 +4,21 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Automation Opportunity Finder{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header class="topbar">
         <div class="topbar-inner">
-            <span class="logo">⚙️ Automation Opportunity Finder</span>
+            <span class="logo">
+                <svg class="logo-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 2L29 9V23L16 30L3 23V9L16 2Z" stroke="#f2a93c" stroke-width="1.6" stroke-linejoin="round"/>
+                    <path d="M16 11L21.5 14.2V20.6L16 23.8L10.5 20.6V14.2L16 11Z" fill="#3fd8c9" fill-opacity="0.85"/>
+                </svg>
+                Automation Opportunity Finder
+            </span>
             <nav class="topnav">
                 <a href="{{ url_for('index') }}">Dashboard</a>
                 <a href="{{ url_for('explorations') }}">Saved Explorations</a>
