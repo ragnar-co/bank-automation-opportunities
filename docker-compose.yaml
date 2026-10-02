@@ -1,8 +1,13 @@
 services:
   web:
     build: .
-    ports:
-      - "8000:8000"
+    # No host port binding here: on a shared Coolify host, Coolify's Traefik proxy
+    # reaches this container directly over the internal `coolify` network using the
+    # port exposed below — publishing a fixed host port risks colliding with other
+    # apps (or Coolify's own dashboard) already bound to that port on the host.
+    # Local development gets localhost:8000 via docker-compose.override.yml instead.
+    expose:
+      - "8000"
     environment:
       DATABASE_PATH: /data/app.db
       PORT: "8000"

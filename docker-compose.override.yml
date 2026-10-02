@@ -1,0 +1,8 @@
+# Local-development-only convenience, auto-merged by `docker compose up`.
+# Coolify does not read this file (it only reads docker-compose.yaml), so this
+# has no effect on deployment — it only publishes the port to localhost so you
+# can curl/browse the app while testing on your own machine.
+services:
+  web:
+    ports:
+      - "8000:8000"
