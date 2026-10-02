@@ -17,7 +17,7 @@ bank_automation_opportunities.csv
       Schema + Row Validation
               |
               v
-           SQLite3
+           SQLite3 (tasks)
               |
        Query / App Layer
        /       |        \
@@ -25,13 +25,35 @@ bank_automation_opportunities.csv
  Task Effort  Dept Sum   Top 3
        \       |        /
               v
-            Web UI
+      Browser (Flask / Jinja)
+       +-- Dashboard            GET  /
+       +-- Task Detail          GET  /tasks/<task_id>
+       +-- Saved Explorations   GET  /explorations
               |
-       Disclaimer visible
+       Disclaimer visible on every surface showing Weekly Effort
 
 Bonus path:
-SQLite3 aggregates -> Company AI endpoint -> structured exploration proposal
-                                      |-> persist in SQLite3 -> display in Web UI
+Task Detail "Generate AI Exploration" -> POST /tasks/<task_id>/explorations
+              |
+              v
+       ai_service.py (adapter; sole provider boundary)
+              |
+              v
+       Company AI endpoint
+              |
+              v
+     structured exploration result
+     (recommendation, rationale, verification_points)
+              |
+              v
+     SQLite3 (exploration_recommendations, FK -> tasks.task_id)
+              |
+              +--> displayed on Task Detail
+              +--> displayed on Saved Explorations
+
+AI failure/unavailability renders an error state on Task Detail only;
+Dashboard, Task Detail's own task data, department totals, and Top 3 are
+unaffected (AI adapter is isolated from the core query layer).
 ```
 
 ## Tech Stack Decisions
@@ -43,8 +65,10 @@ SQLite3 aggregates -> Company AI endpoint -> structured exploration proposal
   - Why not browser upload: ไม่ใช่ requirement explicit และเพิ่ม multipart/error UX โดยไม่เพิ่ม core scoring signal.
 - Weekly Effort: คำนวณ query-time ด้วย `weekly_runs * minutes_per_run`.
   - Why not persist derived value: ลดโอกาส derived column stale ถ้า source values เปลี่ยน.
-- Web framework/runtime: `null` — calibration owner: Developer; เลือก framework ที่มี scaffold/deploy path พร้อมที่สุดใน environment สอบ แล้วอัปเดตเอกสารนี้ก่อนถือเป็น final.
-- AI provider/model: company-provided endpoint; model identifier/quota = `null` — calibration owner: Platform owner/Developer.
+- Web framework/runtime: **Python 3 / Flask 3.0.3**, server-rendered Jinja templates, vanilla JavaScript/CSS (no SPA framework), served in production by **Gunicorn 22.0.0**.
+  - Why: repo was empty at start, no existing frontend framework, and the requirement is a simple dashboard — not a complex SPA. Server-rendered pages (POST → redirect → GET) keep implementation risk low.
+  - Why not a JS framework/SPA: no client-side state worth a framework; the AI-exploration flow is a single form submit, not an interactive app.
+- AI provider/model: **OpenRouter** (`https://openrouter.ai/api/v1/chat/completions`), model `anthropic/claude-sonnet-4.6`, as a time-boxed stand-in for the company's own AI endpoint — see `docs/ADR.md` ADR-005 for why, and for how the model/provider choice was verified (not guessed) against this account's restrictions. The call is isolated behind `app/ai_service.py` so the provider can be swapped (e.g. to the company's permanent endpoint) without touching `app/routes.py` or the core query layer. The API key (`AI_API_KEY`) expires ~24h after issuance and must be rotated or replaced before relying on this in a durable deployment; it is read only from the environment, never committed to the repository.
 
 ## Deployment Architecture
 
@@ -65,7 +89,7 @@ Web Application Container
 
 - Production URL ต้องเปิด core analytics ได้หลัง deploy.
 - SQLite database ต้องอยู่ใน persistent storage หาก deployment restart แล้วข้อมูลต้องคงอยู่.
-- วิธี build/start ที่แน่นอนขึ้นกับ framework ที่เลือกและต้องบันทึกก่อน final deploy.
+- Build: `docker build` from the repo `Dockerfile` (python:3.12-slim base). Start: container entrypoint runs the idempotent CSV import (only if `DATABASE_PATH` does not yet exist) then starts `gunicorn --bind 0.0.0.0:$PORT app:app`.
 
 ## Scalability Strategy
 
@@ -80,7 +104,7 @@ Web Application Container
 |---|---|---|---|
 | Company Git repository | source submission | Core | ไม่มีผล runtime แต่เป็น submission blocker |
 | Coolify | production deployment | Core | ถ้า deploy ไม่ผ่านถือว่า core ยังไม่ส่งมอบ |
-| Company AI endpoint | สร้าง exploration recommendation | Bonus | ต้อง fail independently; core dashboard ยังใช้ได้ |
+| AI endpoint (currently OpenRouter, time-boxed company key — see ADR-005) | สร้าง exploration recommendation | Bonus | ต้อง fail independently; core dashboard ยังใช้ได้ |
 | Claude Code/Codex | coding workflow | Build-time | ไม่ใช่ runtime dependency |
 
 ## Observability & SLOs
@@ -89,7 +113,7 @@ Web Application Container
 - SLO latency: `null` — calibration owner: Developer; วัดหน้า summary/query จริงก่อนกำหนด.
 - Structured logging: import result, validation failure, application error และ AI call failure (bonus) ควรมี log ที่ระบุ operation และ error โดยไม่ log secret.
 - Import reconciliation: บันทึกจำนวน rows read / accepted / rejected ใน run output เพื่อใช้ตรวจสอบ ingestion.
-- Core health signal: application process + DB access; concrete health endpoint = `null` — calibration owner: Developer หลังเลือก framework.
+- Core health signal: `GET /health` — currently a static liveness check (process is up); does not yet verify SQLite accessibility. Readiness (DB reachable) vs. liveness (process up) should be made explicit before relying on this for deploy gating — calibration owner: Developer.
 - Alert thresholds และ incident severity ยังไม่ประกาศที่นี่; เป็นหน้าที่ RUNBOOK.md ในชุดเต็ม.
 
 Validation Checklist

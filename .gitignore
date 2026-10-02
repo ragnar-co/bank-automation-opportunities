@@ -6,3 +6,4 @@ venv/
 *.db
 data/*.db
 .DS_Store
+.env

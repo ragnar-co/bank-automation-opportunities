@@ -21,7 +21,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import db  # noqa: E402
+from app import db  # noqa: E402
 
 REQUIRED_COLUMNS = ["task_id", "department", "task_name", "weekly_runs", "minutes_per_run"]
 

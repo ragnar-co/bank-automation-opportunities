@@ -29,6 +29,8 @@ Dataset baseline ที่ยืนยันจากไฟล์ตัวอย
 - US-003 — ในฐานะ `P-01 Automation Analyst` ฉันต้องการเห็น Top 3 tasks ตาม weekly effort เพื่อเลือกหัวข้อสำหรับสำรวจต่ออย่างรวดเร็ว.
 - US-004 — ในฐานะ `P-02 Management Reviewer` ฉันต้องการเห็น disclaimer ชัดเจนเพื่อไม่ตีความ effort เป็น automation savings.
 - US-005 — ในฐานะ `P-02 Management Reviewer` ฉันต้องการเปิดผลผ่าน browser โดยไม่ต้องอ่าน CSV โดยตรง.
+- US-006 — ในฐานะ `P-01 Automation Analyst` ฉันต้องการเปิด task ที่สนใจแล้วขอให้ระบบสร้าง AI Exploration เพื่อรู้ว่าควรตรวจสอบประเด็นใดเพิ่มเติมก่อนตัดสินใจสำรวจ Automation ต่อ.
+- US-007 — ในฐานะ `P-01 Automation Analyst` หรือ `P-02 Management Reviewer` ฉันต้องการกลับมาเปิด Exploration Recommendation ที่เคยบันทึกไว้ เพื่อ review เหตุผลและ verification points ภายหลังโดยไม่ต้อง generate ซ้ำ.
 
 ## Functional Requirements
 
@@ -65,7 +67,12 @@ Dataset baseline ที่ยืนยันจากไฟล์ตัวอย
 - AC-006 (FR-007): Top 3 ต้องเป็นสาม row ที่มี weekly effort สูงสุดจาก dataset ที่ persist อยู่.
 - AC-007 (FR-008): หน้าผลลัพธ์ต้องมีข้อความที่สื่อชัดว่าเวลาที่แสดงเป็น current effort และไม่ใช่เวลาที่ Automation จะประหยัดได้จริง.
 - AC-008 (FR-009): production URL บน Coolify ต้องเปิดได้และแสดง core analytics โดยไม่ต้องใช้ไฟล์ CSV ที่เครื่องผู้ประเมิน.
-- AC-009 (FR-010/011, bonus): เมื่อ AI call สำเร็จ recommendation ต้องมี recommendation/rationale/verification points ถูก persist และ UI เปิดดูได้; เมื่อ AI call ล้มเหลว core analytics ยังทำงานได้.
+- AC-009 (FR-010/011, bonus): เมื่อ AI call สำเร็จ recommendation ต้องมี recommendation/rationale/verification points ถูก persist และ UI เปิดดูได้; เมื่อ AI call ล้มเหลว core analytics ยังทำงานได้. โดยละเอียด:
+  - Task Detail (`/tasks/<task_id>`) ต้องเปิดข้อมูล task จริงจาก DB (task_id, department, task_name, weekly_runs, minutes_per_run, weekly effort ที่คำนวณแล้ว) และแสดง disclaimer เดียวกับ Dashboard.
+  - การกด "Generate AI Exploration" ต้องเรียก AI ผ่าน server-side adapter แล้วได้ผลลัพธ์ที่มีครบ `recommendation`, `rationale`, `verification_points`.
+  - ผลลัพธ์ต้องถูก persist ลง SQLite3 ก่อนแสดงผล และต้อง reload/refresh หน้าแล้วยังเห็นผลเดิม (ไม่ใช่ state ชั่วคราวใน session/memory).
+  - หน้า Saved Explorations (`/explorations`) ต้องแสดงรายการ exploration ที่บันทึกไว้ทั้งหมด พร้อม task, department, weekly effort ตอนที่ generate, และเวลา generate.
+  - เมื่อ AI call ล้มเหลวหรือยังไม่ได้ config endpoint, Task Detail ต้องแสดง error/unavailable state ที่ชัดเจน โดย Dashboard, task data, department totals และ Top 3 ต้องยังทำงานถูกต้องตามปกติ.
 
 Validation Checklist
 - [x] ทุก FR มี priority จาก `requirement_priority`

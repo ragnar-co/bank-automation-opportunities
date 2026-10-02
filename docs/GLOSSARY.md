@@ -25,12 +25,12 @@ Depends on: `personas`, `prd`
 
 | Term | Current Mapping | Notes |
 |---|---|---|
-| Task | `tasks` | คาดหมายสำหรับ implementation; reconcile เมื่อ DATA_MODEL.md ถูกสร้าง |
+| Task | `tasks` | confirmed by DATA_MODEL.md |
 | Department | `tasks.department` | ค่า source จาก CSV |
 | Weekly Run | `tasks.weekly_runs` | source field |
 | Minutes per Run | `tasks.minutes_per_run` | source field |
 | Weekly Effort | query expression `weekly_runs * minutes_per_run` | ไม่จำเป็นต้อง persist เป็น column |
-| Exploration Recommendation | `ai_recommendations` | bonus; reconcile เมื่อ DATA_MODEL.md ถูกสร้าง |
+| Exploration Recommendation | `exploration_recommendations` | confirmed by DATA_MODEL.md; supersedes the earlier placeholder name `ai_recommendations` |
 
 ## Disputed Terms
 
@@ -45,6 +45,7 @@ Depends on: `personas`, `prd`
 | Revision | Change |
 |---|---|
 | Draft-1 | สร้างคำศัพท์หลักจากโจทย์, CSV schema และ PRD ของ Automation Opportunity Finder |
+| Draft-2 | Reconciled Term-to-Entity Mapping against `docs/DATA_MODEL.md`: Exploration Recommendation now maps to `exploration_recommendations` (was placeholder `ai_recommendations`) |
 
 ## Enumeration Registry
 

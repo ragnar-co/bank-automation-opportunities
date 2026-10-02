@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ task.task_name }} — Automation Opportunity Finder{% endblock %}
+{% block content %}
+    <a class="back-link" href="{{ url_for('index') }}">&larr; Dashboard</a>
+
+    <h1 class="page-title">{{ task.task_name }}</h1>
+    <p class="subtitle">
+        <span class="badge">{{ task.department }}</span>
+        <span class="task-id">{{ task.task_id }}</span>
+    </p>
+
+    <section class="detail-card">
+        <h2>Current Workload</h2>
+        <dl class="kv-list">
+            <div><dt>Weekly Runs</dt><dd>{{ task.weekly_runs }}</dd></div>
+            <div><dt>Minutes / Run</dt><dd>{{ task.minutes_per_run }}</dd></div>
+            <div><dt>Weekly Effort</dt><dd class="kv-highlight">{{ task.weekly_minutes | human_minutes }} / week</dd></div>
+        </dl>
+        <p class="disclaimer">
+            Weekly Effort is current effort, not estimated Automation Savings.
+        </p>
+    </section>
+
+    <section class="detail-card">
+        <h2>AI Exploration</h2>
+
+        {% if ai_error %}
+        <div class="ai-state ai-error">
+            <strong>AI unavailable.</strong>
+            <p>{{ ai_error }}</p>
+        </div>
+        {% endif %}
+
+        {% if explorations %}
+            {% for exploration in explorations %}
+            <article class="exploration {% if not loop.first %}exploration-older{% endif %}">
+                <h3>Exploration Recommendation</h3>
+                <p class="exploration-label">Recommendation</p>
+                <p>{{ exploration.recommendation }}</p>
+                <p class="exploration-label">Why investigate</p>
+                <p>{{ exploration.rationale }}</p>
+                <p class="exploration-label">Verify before deciding</p>
+                <ul class="verification-list">
+                    {% for point in exploration.verification_points %}
+                    <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
+                <p class="exploration-meta">Generated {{ exploration.created_at }}</p>
+            </article>
+            {% endfor %}
+        {% else %}
+        <p class="empty">No exploration generated yet.</p>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('create_exploration', task_id=task.task_id) }}" id="generate-exploration-form">
+            <button type="submit" class="btn-primary">Generate AI Exploration</button>
+        </form>
+    </section>
+{% endblock %}
+{% block scripts %}
+<script>
+    document.getElementById("generate-exploration-form")?.addEventListener("submit", (event) => {
+        const button = event.target.querySelector("button[type=submit]");
+        if (button) {
+            button.disabled = true;
+            button.textContent = "Generating…";
+        }
+    });
+</script>
+{% endblock %}

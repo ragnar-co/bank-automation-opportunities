@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Saved Explorations — Automation Opportunity Finder{% endblock %}
+{% block content %}
+    <h1 class="page-title">Saved Explorations</h1>
+
+    {% if explorations %}
+    <table>
+        <thead>
+            <tr>
+                <th>Task</th>
+                <th>Department</th>
+                <th>Weekly Effort (at generation)</th>
+                <th>Generated</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for exploration in explorations %}
+            <tr>
+                <td>{{ exploration.task_name }} <span class="task-id">({{ exploration.task_id }})</span></td>
+                <td>{{ exploration.department }}</td>
+                <td>{{ exploration.source_weekly_minutes | human_minutes }}</td>
+                <td>{{ exploration.created_at }}</td>
+                <td><a class="btn-link" href="{{ url_for('task_detail', task_id=exploration.task_id) }}">View</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No explorations saved yet.</p>
+    {% endif %}
+{% endblock %}
