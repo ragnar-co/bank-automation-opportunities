@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Automation Opportunity Finder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <div class="topbar-inner">
+            <span class="logo">⚙️ Automation Opportunity Finder</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <p class="disclaimer">
+            <strong>Note:</strong> Weekly time represents current effort spent on each task.
+            It is intended only to prioritize automation exploration and is
+            <strong>not</strong> an estimate of time that automation would save.
+        </p>
+
+        <section class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-value">{{ summary.task_count }}</span>
+                <span class="stat-label">Tasks tracked</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ summary.department_count }}</span>
+                <span class="stat-label">Departments</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">{{ summary.total_weekly_minutes | human_minutes }}</span>
+                <span class="stat-label">Total weekly effort</span>
+            </div>
+        </section>
+
+        <section>
+            <h2>Top 3 Tasks by Weekly Effort</h2>
+            {% if top_tasks %}
+            <div class="top-cards">
+                {% for task in top_tasks %}
+                <div class="top-card">
+                    <span class="rank">#{{ loop.index }}</span>
+                    <span class="badge">{{ task.department }}</span>
+                    <p class="task-name">{{ task.task_name }}</p>
+                    <p class="task-effort">{{ task.weekly_minutes | human_minutes }}<small> / week</small></p>
+                    <p class="task-id">{{ task.task_id }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty">No task data available yet.</p>
+            {% endif %}
+        </section>
+
+        <section>
+            <h2>Weekly Effort by Department</h2>
+            {% if department_totals %}
+            <div class="bar-chart">
+                {% for dept in department_totals %}
+                <div class="bar-row">
+                    <span class="bar-label">{{ dept.department }}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: {{ ((dept.weekly_minutes / max_department_minutes) * 100) if max_department_minutes else 0 }}%"></div>
+                    </div>
+                    <span class="bar-value">{{ dept.weekly_minutes | human_minutes }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="empty">No department data available yet.</p>
+            {% endif %}
+        </section>
+
+        <section>
+            <div class="section-header">
+                <h2>All Tasks</h2>
+                {% if tasks %}
+                <input id="task-search" type="search" placeholder="Filter by task, department, or ID…" aria-label="Filter tasks">
+                {% endif %}
+            </div>
+
+            {% if tasks %}
+            <table id="task-table">
+                <thead>
+                    <tr>
+                        <th data-sort="string">Task ID</th>
+                        <th data-sort="string">Department</th>
+                        <th data-sort="string">Task</th>
+                        <th data-sort="number">Weekly Runs</th>
+                        <th data-sort="number">Minutes/Run</th>
+                        <th data-sort="number" data-sort-default="desc">Weekly Effort</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.task_id }}</td>
+                        <td>{{ task.department }}</td>
+                        <td>{{ task.task_name }}</td>
+                        <td data-value="{{ task.weekly_runs }}">{{ task.weekly_runs }}</td>
+                        <td data-value="{{ task.minutes_per_run }}">{{ task.minutes_per_run }}</td>
+                        <td data-value="{{ task.weekly_minutes }}">{{ task.weekly_minutes | human_minutes }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <p id="task-table-status" class="table-status"></p>
+            <nav id="task-pagination" class="pagination" aria-label="Task table pages"></nav>
+            {% else %}
+            <p class="empty">No task data available yet. Run the CSV import first.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
